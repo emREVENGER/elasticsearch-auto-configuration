@@ -1,0 +1,22 @@
+{
+  "elasticsearch" : {
+      "install": {
+        "download_url": "https://artifacts.elastic.co/downloads/elasticsearch/",
+        "version": "5.4.1",
+        "as_service": true,
+        "custom_directory": ""
+      },
+      "configuration": {
+          "host": "",
+          "port": "",
+          "template": {
+            "name": "",
+            "file": ""
+          },
+          "aliases": {
+             "name": "",
+             "file": ""
+          }
+      }
+   }
+}
