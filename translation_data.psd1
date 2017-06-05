@@ -15,6 +15,7 @@
             download_message = "Téléchargement de ElasticSearch"
             unzip_elastic = "Décompression du fichier ElasticSearch"
             install_as_service = "Installation de ElasticSearch en tant que service Windows"
+            init_and_launch = "Initialisation et lancement de ElasticSearch"
         }
 
         configuration = @{
@@ -47,6 +48,7 @@
             download_message = "Download ElasticSearch"
             unzip_elastic = "UNZIP - ElasticSearch compress file"
             install_as_service = "Install ElasticSearch as the service"
+            init_and_launch = "Initialisation et lancement de ElasticSearch"
         }
 
         configuration = @{

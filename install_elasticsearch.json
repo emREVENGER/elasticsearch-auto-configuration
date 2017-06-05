@@ -4,7 +4,7 @@
       "install": {
         "download_url": "https://artifacts.elastic.co/downloads/elasticsearch/",
         "version": "5.4.1",
-        "as_service": true,
+        "as_service": false,
         "custom_directory": ""
       },
       "configuration": {
