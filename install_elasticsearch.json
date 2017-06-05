@@ -1,5 +1,6 @@
 {
   "elasticsearch" : {
+      "lang": "fr",
       "install": {
         "download_url": "https://artifacts.elastic.co/downloads/elasticsearch/",
         "version": "5.4.1",
