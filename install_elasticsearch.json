@@ -13,8 +13,8 @@
           "port": "9200",
           "templates" : [
             {
-                "name": "template_test",
-                "file": "C:/Users/GH0ST/Documents/GitHub/elasticsearch-auto-configuration/test/template_test.json"
+                "name": "ADD_SERVICE_NAME",
+                "file": "ADD_PATH_TO_FILE"
             }
           ],
           "aliases": {
