@@ -14,6 +14,8 @@ $language = "en"
 $config_path = Join-Path -path  $current_path -ChildPath $config_file
 $configuration = getConfig -path $config_path
 
+$elastic_file_name = "elasticsearch-$($configuration.elasticsearch.install.version)"
+
 #Récuperation des données de traduction
 
 $translation_data = InitTranslateConfiguration
@@ -53,9 +55,11 @@ function displayInstall($type, $message){
     } ElseIf ($type -eq "DOWNLOAD") {
         Write-Host "-   $($translation_data.install.download_message)   - `n$message" -ForegroundColor White -BackgroundColor Blue
     } ElseIf ($type -eq "UNZIP") {
-        Write-Host "$($translation_data.install.unzip_elastic) - $message"
+        Write-Host "$($translation_data.install.unzip_elastic) - $message" -ForegroundColor White -BackgroundColor Blue
     } Elseif ($type -eq "SERVICE") {
-        Write-Host "$($translation_data.install.install_as_service) - $message"
+        Write-Host "$($translation_data.install.install_as_service) - $message" -ForegroundColor White -BackgroundColor Blue
+    } ElseIf ($type -eq "LAUNCH") {
+        Write-Host "$($translation_data.install.launch) - $message" 
     } ElseIf ($type -eq "CONFIGURATION") {
         Write-Host "$($translation_data.configuration.title) - $message"
     }
@@ -63,14 +67,14 @@ function displayInstall($type, $message){
 }
 
 # Installation du service
-function InstallAsService($service_name, $service_path){
-    try {
-        Invoke-Command | Join-Path -path $service_path -ChildPath $service_name
+function InstallBin($bin){
+   try {
+        iex "$($bin)"
     } catch {
-        Write-Error "Install service failed"
+        Write-Error "$($translation_data.error.service_install)"
     }
 }
-
+  
 # Téléchargement de ElasticSearch
 function downloadElasticSearch($option, $configuration)
 {
@@ -109,13 +113,30 @@ function InstallManager($config){
 
             #Telechargement
             $output_path = downloadElasticSearch -option $install_option $config.elasticsearch.install
-            $download_status = "done"
+            $install_status = "download_finish"
 
             #Decompression
-            if ($download_status -eq "done") {
+            if ($install_status -eq "download_finish") {
                 $elastic_file = Join-Path -Path $output_path -ChildPath "elasticsearch-$($config.elasticsearch.install.version).zip"
                 displayInstall -type "UNZIP" -message "$($elastic_file) $($translation.general.to) $extract_path"
                 Unzip -zip_file $elastic_file -path_to_extract $output_path
+                $install_status = "extracted"
+            }
+        
+            if ($install_status -eq "extracted") {
+                
+                # Install en tant que service
+                $bin = Join-Path -Path $output_path -ChildPath "$($elastic_file_name)/bin/./elasticsearch.bat"
+           
+                if ($config.elasticsearch.install.as_service -eq $true -and
+                    $config.elasticsearch.install.service_name) 
+                {
+                    $bin = Join-Path -Path $output_path -ChildPath "$($elastic_file_name)/bin/./elasticsearch-service.bat install $($config.elasticsearch.install.service_name)"
+                    displayInstall -type "SERVICE" -message "$($service)"
+
+                }
+                #Install et lancemment direct par defaut
+                InstallBin -bin $bin
             }
         } 
     }
@@ -128,7 +149,3 @@ function RunInstall(){
 }
 
 RunInstall
-
-
-
-
