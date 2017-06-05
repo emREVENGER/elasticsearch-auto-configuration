@@ -4,16 +4,19 @@
       "install": {
         "download_url": "https://artifacts.elastic.co/downloads/elasticsearch/",
         "version": "5.4.1",
-        "as_service": false,
+        "as_service": true,
+        "service_name": "elastic-5",
         "custom_directory": ""
       },
       "configuration": {
-          "host": "",
-          "port": "",
-          "template": {
-            "name": "",
-            "file": ""
-          },
+          "host": "localhost",
+          "port": "9200",
+          "templates" : [
+            {
+                "name": "template_test",
+                "file": "C:/Users/GH0ST/Documents/GitHub/elasticsearch-auto-configuration/test/template_test.json"
+            }
+          ],
           "aliases": {
              "name": "",
              "file": ""

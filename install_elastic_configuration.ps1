@@ -41,6 +41,15 @@ function getConfig($path) {
     }
 }
 
+# Fonction de requête REST
+function xRestResquest($Method, $Uri, $Body, $error_message){
+    try {
+        return $response = Invoke-RestMethod -Method $Method -Uri $Uri -Body $Body
+    } catch {
+        Write-Error $error_message
+    }
+}
+
 # Fonction de décompression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 function Unzip($zip_file, $path_to_extract){
@@ -67,11 +76,11 @@ function displayInstall($type, $message){
 }
 
 # Installation du service
-function InstallBin($bin){
+function ExecBin($bin, $error_message){
    try {
         iex "$($bin)"
     } catch {
-        Write-Error "$($translation_data.error.service_install)"
+        Write-Error $error_message
     }
 }
   
@@ -131,14 +140,50 @@ function InstallManager($config){
                 if ($config.elasticsearch.install.as_service -eq $true -and
                     $config.elasticsearch.install.service_name) 
                 {
-                    $bin = Join-Path -Path $output_path -ChildPath "$($elastic_file_name)/bin/./elasticsearch-service.bat install $($config.elasticsearch.install.service_name)"
+                    $bin = Join-Path -Path $output_path -ChildPath "$($elastic_file_name)/bin/./elasticsearch-service.bat"
                     displayInstall -type "SERVICE" -message "$($service)"
 
+                    ExecBin -bin "$($bin) install $($config.elasticsearch.install.service_name)" -error_message "$($config.elasticsearch.install.service_name)"
+              
+                    ExecBin -bin "$($bin) start $($config.elasticsearch.install.service_name)" -error_message "$($translation_data.error.service_start) --> $($config.elasticsearch.install.service_name)"
+                    return;
                 }
+                
                 #Install et lancemment direct par defaut
-                InstallBin -bin $bin
+                ExecBin -bin "$($bin)" -error_message "$($config.elasticsearch.install.launch_elastic)"
             }
         } 
+    }
+}
+
+# Fonction pour la configuration - Template - Alias
+function ConfigurationManager($config){
+
+    if ($config.elasticsearch.configuration) {
+    
+        $command = ""
+        $url = "http://" + $config.elasticsearch.configuration.host + ":$($config.elasticsearch.configuration.port)/"
+        
+        if ($config.elasticsearch.configuration.templates) {
+            
+            $command = "_template"
+            foreach ($template in $config.elasticsearch.configuration.templates){
+                if ($template.name -and $template.file) {
+                    
+                    $url += $command + "/$($template.name)"
+                    
+                    $template_content = Get-Content -Raw -Path $template.file | ConvertFrom-Json | ConvertTo-Json
+
+                    $response = xRestResquest -Method Post -Uri $url -Body $template_content -error_message $translation_data.error.cannot_post_template
+
+                    if ($response.acknowledged -and $response.acknowledged -eq $true){
+                        Write-Host "$($translation_data.configuration.template_is_on_elastic) --> $($url)" -BackgroundColor Green -ForegroundColor Black
+                    } else {
+                        Write-Error "$($translation_data.error.invalid_template) --> $($template.file)"
+                    }
+                } 
+            }
+        }
     }
 }
 
@@ -146,6 +191,7 @@ function InstallManager($config){
 function RunInstall(){
     displayInstall -type "INIT"
     InstallManager -config $configuration
+    ConfigurationManager -config $configuration
 }
 
 RunInstall
