@@ -1,5 +1,5 @@
 {
-  "template": "test_*",
+  "template": "test-index",
   "settings": {
     "number_of_shards": 1
   },

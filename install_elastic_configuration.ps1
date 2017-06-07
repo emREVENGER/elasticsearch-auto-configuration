@@ -102,7 +102,6 @@ function downloadElasticSearch($option, $configuration)
         Write-Host $translation_data.general.download_finished -ForegroundColor Green
 
         return $output_path
-
     } catch {
             Write-Error  "$($translation_data.error.check_configuration_file) - $($config_file) 
                     1 - $($translation_data.error.put_elastic_link)
@@ -156,30 +155,39 @@ function InstallManager($config){
     }
 }
 
-# Fonction pour la configuration - Template - Alias
+# Fonction pour la configuration gère les commandes Elasticsearch
 function ConfigurationManager($config){
 
     if ($config.elasticsearch.configuration) {
     
-        $command = ""
-        $url = "http://" + $config.elasticsearch.configuration.host + ":$($config.elasticsearch.configuration.port)/"
         
-        if ($config.elasticsearch.configuration.templates) {
+        if ($config.elasticsearch.configuration.commands) {
             
-            $command = "_template"
-            foreach ($template in $config.elasticsearch.configuration.templates){
-                if ($template.name -and $template.file) {
-                    
-                    $url += $command + "/$($template.name)"
-                    
-                    $template_content = Get-Content -Raw -Path $template.file | ConvertFrom-Json | ConvertTo-Json
+            foreach ($element in $config.elasticsearch.configuration.commands){
 
-                    $response = xRestResquest -Method Post -Uri $url -Body $template_content -error_message $translation_data.error.cannot_post_template
+                $url = $config.elasticsearch.configuration.host + ":$($config.elasticsearch.configuration.port)/"
+
+                if (!($($element.type -eq "index"))){
+                    $url += "$($element.type)/"    
+                }
+                
+
+                if ($element.name -and 
+                $element.file -and
+                $element.type -and
+                $element.method) {
+                    
+                    if ($element.expand_url_with_name -eq $true){
+                        $url += "$($element.name)"
+                    }
+
+                    $element_content = Get-Content -Raw -Path $element.file | ConvertFrom-Json | ConvertTo-Json -Depth 10
+                    $response = xRestResquest -Method $element.method -Uri $url -Body $element_content -error_message $translation_data.error.cannot_post_template
 
                     if ($response.acknowledged -and $response.acknowledged -eq $true){
-                        Write-Host "$($translation_data.configuration.template_is_on_elastic) --> $($url)" -BackgroundColor Green -ForegroundColor Black
+                        Write-Host "$($translation_data.configuration.command_sent_to_elastic) --> $($element.type) - $($url)" -BackgroundColor Green -ForegroundColor Black
                     } else {
-                        Write-Error "$($translation_data.error.invalid_template) --> $($template.file)"
+                        Write-Error "$($translation_data.error.invalid_request) --> $($element.type) - $($element.file)"
                     }
                 } 
             }
